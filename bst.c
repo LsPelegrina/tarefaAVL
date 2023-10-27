@@ -12,6 +12,7 @@ link novoNo (int item, link l, link r) {
   t->id = id++;
   return t;
 }
+
 Tree createTree(){
   Tree t = malloc (sizeof (struct tree));
   t->z = malloc (sizeof(struct node));
@@ -46,7 +47,6 @@ link searchR(Tree t, link h, int query) {
     return searchR(t, h->l, query);
   return searchR(t, h->r, query);
 } 
-
 
 link search (Tree t, int query){
    return searchR(t, t->head, query);
@@ -85,15 +85,16 @@ void imprimePosOrdem (Tree t, link h){
   imprimePosOrdem (t, h->r);
   printf("<chave: %d N: %d>", h->item, h->N); 
 }
+
 void imprimePreOrdem (Tree t, link h, int k) {
   if(h == t->z) return;
-  for(int i = 0; i <= k; i++)
+  int i; // mudan�a pois n�o compilava
+  for(i = 0; i <= k; i++)
     printf (" . ");
   printf("<chave: %d N: %d>\n", h->item, h->N); 
   imprimePreOrdem (t, h->l, k + 1); 
   imprimePreOrdem (t, h->r, k + 1);
 }
-
 
 void printnode (char  *x, int h) {
     int i;
@@ -101,6 +102,7 @@ void printnode (char  *x, int h) {
         printf("\t");
     printf("%s\n", x);
 }
+
 int c = 0;
 void imprimeR(Tree a, link t){
     char s[255];
@@ -123,6 +125,7 @@ void imprimeR(Tree a, link t){
     }
     imprimeR(a,t->l);
 }
+
 void imprime(Tree a, char *s) {
     c = 0;
     printf("digraph %s {\n", s);
@@ -130,6 +133,7 @@ void imprime(Tree a, char *s) {
     imprimeR(a, a->head);
     printf("}\n");
 }
+
 void imprimeFromNode(Tree a, link h, char *s) {
   c = 0;
   printf("digraph  {\n" );
@@ -139,10 +143,55 @@ void imprimeFromNode(Tree a, link h, char *s) {
   printf("}\n");
 }
 
+// NOVA IMPLEMENTACAO -- Inserir recursivamente os novos nós
+
 link AVLinsertR (Tree t, link h, int item){
-  // Implemente o AVL insert, faça as modificações necessárias no código
-  return NULL;
+  if(h == t->z) {
+    return novoNo(item, t->z, t->z); // Se o nó for vazio, retorna um novo nó
+  }
+  
+  if(item < h->item) {
+    h->l = AVLinsertR(t, h->l, item); //Se o valor for menor, ele irá para esquerda
+  } else if(item > h->item) {
+    h->r = AVLinsertR(t, h->r, item); //Se o valor for maior, ele irá para direita
+  } else {
+    return h; // Se o valor já existir na árvore, simplesmente retorna
+  }
+  
+  if(h->l->N > h->r->N) { //Definir a nova contagem de nós, se o numeno de nós da esqueda for maior que o numero de nós da direita
+	  h->N = 1 + h->l->N; // Soma o nó atual, mais os nós que tem para esquerda
+  } else {
+	  h->N = 1 + h->r->N; // Soma o nó atual, mais os nós que tem para direita
+  }
+  
+  int fb = h->l->N - h->r->N; // Fator de balanceamento // altura da esqueda menos a direita
+  
+  if(fb > 1) { // Caso 1, fator maior que 1 -> desbalanceada para esqueda
+	  if(item < h->l->item) { //Se o valor for menor que o que o valor do nó atual, necessario rotação para direita
+		  h = rotR(t, h);
+	  } else {
+		  h->l = rotL(t, h->l); //Se não, é necessario fazer uma rotação dupla rotacao primeiro uma rotação esqueda no nó atual, alinhando os valores
+		  h = rotR(t, h); // E posteriormente uma rotação a direita no nó anterior, sendo o novo pai, o novo nó inserido
+	  }
+  }
+  if(fb < -1) { // Caso 2, fator menor que -1 -> desbalanceado para direita
+  	if(item > h->r->item) { // Valor maior que o valor do nó a direita
+		  h = rotL(t, h); // rotação esquerda
+	  } else {
+		  h->r = rotR(t, h->r); //Se não, é necessario fazer uma rotação dupla, primeiro para direita no nó atual, alinhando os valores para direita
+		  h = rotL(t, h); // Depois, uma rotacao esquerda, no nó anterior, sendo o novo pai, o novo nó inserido
+	  }
+  }
+  
+  return h; // retorna a raiz
 }
 
-
+link AVLinsert(Tree t, int item) {
+	if(t->head == t->z) { 
+		t->head = novoNo(item, t->z, t->z); //Cria novo nó, se a raiz da arvore for vazia
+		return t->head;
+	} else {
+		t->head = AVLinsertR(t, t->head, item); // Caso o nó já exista, chama a função AVLinsert recursivamente, passando como argumento, a arvore, a raiz, e o valor que será inserido
+	}
+}
 
